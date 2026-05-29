@@ -1,7 +1,9 @@
 /**
  * Live data layer — updates UI from /api/* (run: npm start)
  */
-const API = '';
+// Bila di GitHub Pages (*.github.io), panggil backend Render. Bila di Render sendiri, guna laluan relatif.
+const RENDER_BACKEND = 'https://mymobility.onrender.com'; // tukar jika URL Render anda berbeza
+const API = /\.github\.io$/i.test(location.hostname) ? RENDER_BACKEND : '';
 const lang = () => window.lang || 'ms';
 const t = (ms, en) => (lang() === 'ms' ? ms : en);
 

@@ -32,6 +32,16 @@ const CACHE_MS = { gtfs: 6 * 60 * 60 * 1000, vehicles: 25 * 1000, alerts: 5 * 60
 const THREADS_KEYWORDS = ['Rapid KL gangguan', 'RapidKL delay', 'MRT gangguan', 'LRT gangguan'];
 const THREADS_PROFILES = ['myrapidkl', 'rapidkl'];
 
+// CORS: benarkan frontend (cth GitHub Pages) panggil API ini dari origin lain.
+// Data awam sahaja, tiada kuki/auth — selamat untuk dibuka.
+app.use('/api', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 app.use(
   express.static(path.join(__dirname), {
     setHeaders(res, filePath) {

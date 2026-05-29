@@ -1,6 +1,7 @@
 /* MyMobility PWA — cache shell, network for live API */
-const CACHE = 'mymobility-v6';
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/js/live-data.js', '/js/pwa.js', '/icons/icon-192.svg', '/icons/icon-512.svg', '/icons/icon-maskable.svg'];
+const CACHE = 'mymobility-v7';
+// Laluan relatif supaya berfungsi di root (Render) dan subpath (GitHub Pages /MyMobility/).
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'js/live-data.js', 'js/pwa.js', 'icons/icon-192.svg', 'icons/icon-512.svg', 'icons/icon-maskable.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -38,7 +39,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(request).then((cached) => {
       const network = fetch(request)
         .then((res) => {
-          if (res.ok && url.pathname !== '/sw.js') {
+          if (res.ok && !url.pathname.endsWith('/sw.js')) {
             const clone = res.clone();
             caches.open(CACHE).then((c) => c.put(request, clone));
           }
