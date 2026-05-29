@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: mymobility
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Pilihan: token Threads API. Tinggalkan kosong jika tiada (app tetap jalan).
+      - key: THREADS_ACCESS_TOKEN
+        sync: false
