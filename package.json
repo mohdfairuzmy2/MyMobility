@@ -1,0 +1,19 @@
+{
+  "name": "mymobility-assistant",
+  "version": "1.0.0",
+  "description": "MyMobility Assistant prototype with live Malaysian transit data",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "express": "^4.21.2",
+    "gtfs-realtime-bindings": "^1.1.1",
+    "rss-parser": "^3.13.0"
+  }
+}

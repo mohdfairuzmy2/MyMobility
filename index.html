@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ms" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#14142b">
+<meta name="description" content="Pembantu pengangkutan awam Lembah Klang — MRT, LRT, bas, gangguan & tambang">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MyMobility">
+<title>MyMobility Assistant</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon-192.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/icon-192.svg">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+:root{--bg:#f5f5f7;--surface:#fff;--surface2:#f0f0f3;--border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);--text:#1a1a1a;--text2:#666;--text3:#999;--accent:#e8394d;--dark:#14142b;--ok:#059669;--warn:#d97706;--err:#e8394d;--r:12px;--rs:8px;--font:'Segoe UI',system-ui,-apple-system,sans-serif}
+[data-theme="dark"]{--bg:#0f0f14;--surface:#1c1c24;--surface2:#252530;--border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.18);--text:#f0f0f0;--text2:#aaa;--text3:#555}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:20px 16px max(40px,env(safe-area-inset-bottom));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:max(20px,env(safe-area-inset-top));transition:background .25s}
+@media (display-mode:standalone),(max-width:520px){body{padding:0;padding-top:env(safe-area-inset-top)}.top-bar{max-width:none;margin:0;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top))}.phone{max-width:none;width:100%;border-radius:0;border:none;min-height:calc(100dvh - 52px);flex:1}.footer{display:none}.pwa-install{bottom:max(12px,env(safe-area-inset-bottom))}}
+.top-bar{width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.wm{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.5px}.wm span{color:var(--accent)}
+.wm-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.tr{display:flex;gap:8px;align-items:center}
+.ibt{width:36px;height:36px;border-radius:var(--rs);border:.5px solid var(--border2);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:18px;transition:background .15s}
+.ibt:hover{background:var(--surface2)}.ibt.on{background:var(--dark);color:#fff;border-color:var(--dark)}
+.lang-tog{display:flex;background:var(--surface2);border-radius:8px;padding:2px;gap:2px}
+.lbtn{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .15s}
+.lbtn.on{background:var(--dark);color:#fff}
+.phone{width:100%;max-width:390px;background:var(--surface);border-radius:28px;border:1px solid var(--border2);overflow:hidden}
+.sbar{background:var(--dark);padding:10px 18px 6px;display:flex;justify-content:space-between;align-items:center}
+.sbar-t{color:#fff;font-size:12px;font-weight:600}
+.sbar-i{display:flex;gap:6px;color:#fff;font-size:13px}
+.ahdr{background:var(--dark);padding:8px 16px 14px}
+.ht{color:#fff;font-size:17px;font-weight:600}
+.hs{color:rgba(255,255,255,.4);font-size:10px;margin-top:1px}
+.sb{margin:10px 0 0;background:rgba(255,255,255,.08);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:8px;cursor:text;position:relative}
+.sb i{color:rgba(255,255,255,.4);font-size:15px}
+.sb span{color:rgba(255,255,255,.3);font-size:12px;flex:1}
+.sb-inp{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:12px;font-family:inherit;min-width:0}
+.sb-inp::placeholder{color:rgba(255,255,255,.35)}
+.search-dd{position:absolute;left:0;right:0;top:calc(100% + 4px);max-height:220px;overflow-y:auto;background:var(--surface);border:.5px solid var(--border2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:40;display:none}
+.search-dd.on{display:block}
+.search-item{padding:10px 12px;cursor:pointer;border-bottom:.5px solid var(--border);text-align:left}
+.search-item:last-child{border-bottom:none}
+.search-item:hover,.search-item:focus{background:var(--surface2)}
+.search-item-n{font-size:12px;font-weight:600;color:var(--text)}
+.search-item-m{font-size:10px;color:var(--text2);margin-top:2px}
+.fare-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.fare-pill{font-size:10px;padding:3px 7px;border-radius:6px;background:var(--surface2);color:var(--text2);font-weight:600}
+.fare-pill.on{background:#ECFDF5;color:#065F46}
+.feeder-mini{background:var(--surface2);border-radius:var(--rs);padding:10px 12px;margin-bottom:8px;border:.5px solid var(--border)}
+.feeder-mini .fmr{font-size:11px;color:var(--text2);display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.feeder-mini .fmr b{color:var(--text);font-weight:600}
+.ir.plan-tap{cursor:pointer}
+.ntabs{display:flex;background:var(--surface2);border-bottom:.5px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.ntabs::-webkit-scrollbar{display:none}
+.ntab{flex:1;min-width:50px;padding:8px 4px;text-align:center;font-size:9px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;user-select:none}
+.ntab i{display:block;font-size:16px;margin-bottom:2px}
+.ntab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.pg{display:none;padding:14px}.pg.on{display:block}
+.slbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin:14px 0 8px}
+.slbl:first-child{margin-top:0}
+.ab{background:#FEF3F2;border:.5px solid #FECACA;border-left:3px solid var(--err);padding:10px 12px;margin-bottom:13px;display:flex;gap:10px}
+.ab>i{color:var(--err);font-size:18px;flex-shrink:0;margin-top:1px}
+.abt{font-size:13px;font-weight:600;color:#7F1D1D}
+.abd{font-size:11px;color:#991B1B;margin-top:2px;line-height:1.4}
+.abt2{font-size:10px;color:#B91C1C;margin-top:3px}
+.sg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:13px}
+.sc2{background:var(--surface2);border-radius:var(--rs);padding:11px 12px}
+.sv{font-size:22px;font-weight:700;color:var(--text)}.sl{font-size:11px;color:var(--text2);margin-top:1px}
+.ss{font-size:10px;margin-top:4px;display:flex;align-items:center;gap:3px}
+.ok{color:var(--ok)}.wn{color:var(--warn)}.er{color:var(--err)}
+.scl{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}
+.scc{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:10px}
+.scb{width:40px;height:40px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;text-align:center;line-height:1.2}
+.scb.m{background:#FEF2F2;color:#B91C1C}.scb.e{background:#EDE9FE;color:#5B21B6}
+.scb.k{background:#EFF6FF;color:#1D4ED8}.scb.l{background:#FFF7ED;color:#C2410C}.scb.mo{background:#F0FDF4;color:#15803D}
+.scb.bs{background:#ECFDF5;color:#065F46}.scb.bt{background:#FFF7ED;color:#92400E}
+.sci{flex:1}.scn{font-size:13px;font-weight:600;color:var(--text)}.scr{font-size:11px;color:var(--text2);margin-top:1px}
+.scs{font-size:10px;margin-top:3px;display:flex;align-items:center;gap:3px}
+.sct{text-align:right;flex-shrink:0}.scnx{font-size:15px;font-weight:700;color:var(--text)}.sclb{font-size:10px;color:var(--text2)}
+.tcs{display:flex;gap:4px;margin-top:4px;justify-content:flex-end}
+.tc{background:var(--surface2);border-radius:5px;padding:2px 6px;font-size:10px;font-weight:600;color:var(--text)}
+.tc.s{background:#ECFDF5;color:#065F46}
+.hg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:13px}
+.hb{background:var(--surface);border:.5px solid var(--border);border-radius:10px;padding:9px 11px;cursor:pointer;transition:background .15s}
+.hb:hover{background:var(--surface2)}
+.hbn{font-size:12px;font-weight:600;color:var(--text)}.hbt{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px}
+.tg{font-size:9px;padding:2px 5px;border-radius:4px;font-weight:600}
+.tg.m{background:#FEF2F2;color:#B91C1C}.tg.e{background:#EDE9FE;color:#5B21B6}
+.tg.k{background:#EFF6FF;color:#1D4ED8}.tg.bs{background:#ECFDF5;color:#065F46}
+.tg.lt{background:#FFF7ED;color:#92400E}.tg.bt{background:#FEF9C3;color:#713F12}
+.seg-c{display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:13px;gap:3px}
+.seg{flex:1;padding:7px 4px;border-radius:8px;text-align:center;font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s}
+.seg.on{background:var(--surface);border:.5px solid var(--border);color:var(--text);font-weight:600}
+.iw{background:var(--surface2);border-radius:var(--r);padding:12px;margin-bottom:13px}
+.ir{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--surface);border-radius:var(--rs);border:.5px solid var(--border);margin-bottom:6px}
+.ir:last-of-type{margin-bottom:0}
+.id2{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.il{font-size:12px;color:var(--text2);flex:1}.iv{font-size:12px;font-weight:600;color:var(--text)}
+.swb{width:32px;height:32px;border-radius:var(--rs);background:var(--surface2);border:.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;margin:6px auto;color:var(--text2);font-size:16px}
+.or{display:flex;gap:6px;margin-top:10px}
+.ob{flex:1;padding:8px 4px;border-radius:var(--rs);text-align:center;font-size:11px;cursor:pointer;border:.5px solid var(--border2);color:var(--text2);background:var(--surface);transition:all .15s}
+.ob.on{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8;font-weight:600}
+.ro{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:12px 13px;margin-bottom:8px;cursor:pointer}
+.ro.best{border:1.5px solid #93C5FD}
+.bt2{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;background:#DBEAFE;color:#1E40AF;margin-bottom:7px}
+.roh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.roi{width:32px;height:32px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rot{font-size:13px;font-weight:600;color:var(--text)}.rom{font-size:11px;color:var(--text2);margin-top:1px}
+.ros{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.rb{padding:3px 7px;border-radius:5px;font-size:10px;font-weight:600}
+.rb.lrt{background:#FFF7ED;color:#92400E}.rb.mrt{background:#FEF2F2;color:#B91C1C}
+.rb.bus{background:#ECFDF5;color:#065F46}.rb.walk{background:var(--surface2);color:var(--text2)}.rb.grab{background:#EEF2FF;color:#3730A3}
+.ra{color:var(--text3);font-size:11px}
+.rtm{display:flex;justify-content:space-between;align-items:center;padding-top:9px;border-top:.5px solid var(--border)}
+.rd{font-size:12px;color:var(--text2)}.rc{font-size:10px;color:var(--text2);margin-top:1px}.rdu{font-size:14px;font-weight:700;color:var(--text)}
+.rm{background:var(--surface2);border-radius:var(--r);padding:12px;margin-bottom:13px;border:.5px solid var(--border)}
+.rml{font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.rml:not(:first-child){margin-top:11px}
+.rrow{display:flex;align-items:flex-start;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.rrow::-webkit-scrollbar{display:none}
+.rst{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.rdot{width:9px;height:9px;border-radius:50%;border:2px solid var(--surface2);flex-shrink:0}
+.rdot.m{background:#e8394d}.rdot.e{background:#7c3aed}.rdot.k{background:#0369a1}.rdot.l{background:#ea580c}.rdot.mo{background:#16a34a}.rdot.ac{width:13px;height:13px}
+.rseg{height:3px;width:22px;flex-shrink:0;align-self:center}
+.rseg.m{background:#e8394d}.rseg.e{background:#7c3aed}.rseg.k{background:#0369a1}.rseg.l{background:#ea580c}.rseg.mo{background:#16a34a}
+.rseg.dis{background:repeating-linear-gradient(90deg,#e8394d 0,#e8394d 4px,#ccc 4px,#ccc 8px)}
+.rsn{font-size:9px;color:var(--text2);margin-top:2px;white-space:nowrap;text-align:center}
+.rl{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.rli{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--text2)}
+.rld{width:7px;height:7px;border-radius:50%}
+.rf2{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.rf{padding:5px 10px;border-radius:20px;font-size:11px;border:.5px solid var(--border2);cursor:pointer;color:var(--text2);background:var(--surface);transition:all .15s}
+.rf.m.on{background:#FEF2F2;border-color:#FECACA;color:#B91C1C;font-weight:600}
+.rf.e.on{background:#EDE9FE;border-color:#DDD6FE;color:#5B21B6;font-weight:600}
+.rf.k.on{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8;font-weight:600}
+.rf.l.on{background:#FFF7ED;border-color:#FED7AA;color:#C2410C;font-weight:600}
+.rf.mo.on{background:#F0FDF4;border-color:#BBF7D0;color:#15803D;font-weight:600}
+.rf.bt.on{background:#FFF7ED;border-color:#FED7AA;color:#92400E;font-weight:600}
+.rf.bus.on{background:#ECFDF5;border-color:#A7F3D0;color:#047857;font-weight:600}
+.bc{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:11px 12px;margin-bottom:8px}
+.bct{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.bcb{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.bcb.r{background:#ECFDF5;color:#065F46}.bcb.bt{background:#FFF7ED;color:#92400E}
+.bcb.ex{background:#EFF6FF;color:#1D4ED8}.bcb.fd{background:#EDE9FE;color:#5B21B6}
+.bcn{font-size:13px;font-weight:600;color:var(--text)}.bcr{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4}
+.bcm{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.bmi{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text2)}.bmi i{font-size:13px}
+.bct2{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:.5px solid var(--border)}
+.chs{display:flex;gap:5px}
+.ch{background:var(--surface2);border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;color:var(--text)}
+.ch.s{background:#ECFDF5;color:#065F46}
+.pl{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.pi{padding:5px 10px;border-radius:20px;font-size:11px;border:.5px solid var(--border2);cursor:pointer;color:var(--text2);background:var(--surface);transition:all .15s}
+.pi.on{background:#FEF3F2;border-color:#FECACA;color:#B91C1C;font-weight:600}
+.nl{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}
+.ni{background:var(--surface2);border-radius:10px;padding:10px 12px;border-left:3px solid}
+.ni.e{border-left-color:var(--err)}.ni.w{border-left-color:#f59e0b}.ni.i{border-left-color:#3b82f6}.ni.ok{border-left-color:var(--ok)}
+.ns{font-size:10px;font-weight:600;margin-bottom:2px}
+.ni.e .ns{color:#b91c1c}.ni.w .ns{color:#b45309}.ni.i .ns{color:#1d4ed8}.ni.ok .ns{color:#065f46}
+.nt2{font-size:12px;color:var(--text);line-height:1.4}.ntm{font-size:10px;color:var(--text3);margin-top:3px}
+.kw2{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}
+.kw{background:var(--surface2);border:.5px solid var(--border2);border-radius:20px;padding:5px 10px;font-size:11px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+.kw.on{background:#FEF3F2;border-color:#FECACA;color:#B91C1C;font-weight:600}
+.ab2{background:#FFFBEB;border:.5px solid #FDE68A;border-radius:var(--r);padding:12px;margin-bottom:13px}
+.abh{font-size:12px;font-weight:600;color:#92400E;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ar{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:.5px solid rgba(253,230,138,.4)}
+.ar:last-child{border-bottom:none;padding-bottom:0}
+.ai{width:32px;height:32px;border-radius:var(--rs);background:rgba(253,230,138,.4);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai i{font-size:16px;color:#d97706}.ainf{flex:1}
+.an{font-size:12px;font-weight:600;color:#78350F}.ad2{font-size:10px;color:#92400E;margin-top:1px}.ae{font-size:13px;font-weight:700;color:#92400E}
+.bbar{background:var(--surface2);border-top:.5px solid var(--border);display:flex;justify-content:space-around;padding:10px 0 18px}
+.bb{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;cursor:pointer;color:var(--text3);transition:color .15s}
+.bb i{font-size:20px}.bb.on{color:var(--accent);font-weight:600}
+.footer{margin-top:20px;text-align:center;font-size:11px;color:var(--text3);line-height:1.6}
+.footer a{color:var(--accent);text-decoration:none}
+.live-status{font-size:10px;display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:.5px solid var(--border2);background:var(--surface);max-width:200px;line-height:1.3}
+.live-status.ok{color:var(--ok)}.live-status.err{color:var(--text3)}
+.live-status i{font-size:14px;flex-shrink:0}
+.live-status a{color:var(--accent)}
+.pwa-install{position:fixed;left:12px;right:12px;bottom:12px;z-index:100;max-width:396px;margin:0 auto;background:var(--dark);color:#fff;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.pwa-install[hidden]{display:none!important}
+.pwa-install p{font-size:12px;line-height:1.4;flex:1;margin:0}
+.pwa-install button{border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.pwa-install .pwa-go{background:var(--accent);color:#fff}
+.pwa-install .pwa-x{background:transparent;color:rgba(255,255,255,.6);padding:4px 8px}
+/* MAP */
+.mpw{border-radius:var(--r);overflow:hidden;border:.5px solid var(--border);margin-bottom:13px;position:relative;height:300px;background:#d4eaf5}
+.mpc .leaflet-control-attribution{font-size:9px}
+.mpc{width:100%;height:100%;position:relative}
+.mpbg{position:absolute;inset:0;background:#d4eaf5}
+.mpin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;transition:transform .15s;z-index:2}
+.mpin:hover{transform:translate(-50%,-100%) scale(1.15)}
+.mpd{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+.mpd i{transform:rotate(45deg);font-size:13px;color:#fff}
+.mpl{font-size:9px;font-weight:600;color:var(--text);background:var(--surface);padding:2px 5px;border-radius:4px;border:.5px solid var(--border);white-space:nowrap;margin-top:3px;text-align:center}
+.mtt{position:absolute;background:var(--dark);color:#fff;border-radius:8px;padding:7px 10px;font-size:11px;z-index:10;pointer-events:none;white-space:nowrap;display:none;max-width:160px;white-space:normal}
+.mtt.show{display:block}.mtt strong{font-size:12px;display:block;margin-bottom:2px}
+.mleg{position:absolute;bottom:8px;left:8px;background:var(--surface);border-radius:var(--rs);border:.5px solid var(--border);padding:6px 8px;z-index:3}
+.mli{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text2);font-weight:600;margin-bottom:3px}
+.mli:last-child{margin-bottom:0}.mll{width:14px;height:3px;border-radius:2px}
+.mz{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px;z-index:3}
+.mzb{width:26px;height:26px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700;color:var(--text)}
+.sdbox{background:var(--surface2);border-radius:var(--r);padding:12px;margin-bottom:13px;border:.5px solid var(--border)}
+/* FARE CALC */
+.cb{background:var(--surface2);border-radius:var(--r);padding:14px;margin-bottom:13px;border:.5px solid var(--border)}
+.cs{flex:1;padding:9px 10px;border-radius:var(--rs);border:.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:12px;font-family:var(--font);width:100%;margin-bottom:10px;appearance:none}
+.cr{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:14px;text-align:center}
+.cam{font-size:32px;font-weight:700;color:var(--accent)}
+.ccy{font-size:16px;font-weight:600;color:var(--text2);vertical-align:super;margin-right:2px}
+.clb{font-size:11px;color:var(--text2);margin-top:4px}
+.cbd{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.cbi{background:var(--surface2);border-radius:var(--rs);padding:9px;text-align:center}
+.cbv{font-size:14px;font-weight:700;color:var(--text)}.cbl{font-size:10px;color:var(--text2);margin-top:2px}
+.cmo{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.cmode{padding:5px 10px;border-radius:20px;font-size:11px;border:.5px solid var(--border2);cursor:pointer;color:var(--text2);background:var(--surface);transition:all .15s}
+.cmode.on{background:#FEF2F2;border-color:#FECACA;color:#B91C1C;font-weight:600}
+</style>
+</head>
+<body>
+<div class="pwa-install" id="pwaInstall" hidden>
+  <p class="t" data-ms="Pasang MyMobility pada skrin utama untuk akses pantas" data-en="Install MyMobility on your home screen for quick access">Pasang MyMobility pada skrin utama untuk akses pantas</p>
+  <button type="button" class="pwa-go" id="pwaInstallBtn"><span class="t" data-ms="Pasang" data-en="Install">Pasang</span></button>
+  <button type="button" class="pwa-x" id="pwaInstallClose" aria-label="Close"><i class="ti ti-x"></i></button>
+</div>
+<div class="top-bar">
+  <div><div class="wm">MyMobility <span>Assistant</span></div><div class="wm-sub" id="wmsub">Semak cepat, jalan lancar.</div></div>
+  <div class="tr">
+    <div class="live-status err" id="liveStatus"><i class="ti ti-loader"></i><span>Memuatkan data…</span></div>
+    <div class="lang-tog"><div class="lbtn on" id="lms" onclick="setL('ms')">BM</div><div class="lbtn" id="len" onclick="setL('en')">EN</div></div>
+    <div class="ibt" id="tbt" onclick="toggleTheme()"><i class="ti ti-moon" id="tic"></i></div>
+  </div>
+</div>
+
+<div class="phone">
+  <div class="sbar"><span class="sbar-t" id="clk">9:42</span><div class="sbar-i"><i class="ti ti-wifi"></i><i class="ti ti-battery-2"></i></div></div>
+  <div class="ahdr"><div class="ht" id="ht">MyMobility Assistant</div><div class="hs" id="hs">MRT · ERL · KTM · Bas RapidKL · BRT · Alternatif</div><div class="sb" id="searchBar"><i class="ti ti-search"></i><input type="search" class="sb-inp" id="searchInput" autocomplete="off" enterkeyhint="search" /><div class="search-dd" id="searchResults" role="listbox"></div></div></div>
+
+  <div class="ntabs" id="nav">
+    <div class="ntab on" data-p="ph"><i class="ti ti-home"></i><span class="t" data-ms="Utama" data-en="Home">Utama</span></div>
+    <div class="ntab" data-p="pp"><i class="ti ti-route"></i><span class="t" data-ms="Rancang" data-en="Plan">Rancang</span></div>
+    <div class="ntab" data-p="pr"><i class="ti ti-train"></i><span class="t" data-ms="Rel" data-en="Rail">Rel</span></div>
+    <div class="ntab" data-p="pb"><i class="ti ti-bus"></i><span class="t" data-ms="Bas" data-en="Bus">Bas</span></div>
+    <div class="ntab" data-p="pa"><i class="ti ti-bell-ringing"></i><span class="t" data-ms="Amaran" data-en="Alerts">Amaran</span></div>
+    <div class="ntab" data-p="pm"><i class="ti ti-map-2"></i><span class="t" data-ms="Peta" data-en="Map">Peta</span></div>
+    <div class="ntab" data-p="pk"><i class="ti ti-calculator"></i><span class="t" data-ms="Tambang" data-en="Fare">Tambang</span></div>
+  </div>
+
+  <!-- UTAMA -->
+  <div id="ph" class="pg on">
+    <div class="slbl t" data-ms="Keadaan sekarang" data-en="Current status">Keadaan sekarang</div>
+    <div class="sg" id="liveNowStatus"><div class="sc2"><div class="sv">…</div><div class="sl">Memuatkan</div></div></div>
+
+    <div class="slbl t" data-ms="Perjalanan saya" data-en="My trip">Perjalanan saya</div>
+    <div id="liveTodayTrip"><div class="ro"><div class="rot t" data-ms="Memuatkan perjalanan…" data-en="Loading trip…">Memuatkan perjalanan…</div></div></div>
+
+    <div class="slbl t" data-ms="Sampai lagi berapa minit" data-en="Arriving in how many minutes">Sampai lagi berapa minit</div>
+    <div class="scl" id="liveNearbyEta"><div class="scc"><div class="scn">Memuatkan…</div></div></div>
+
+    <div class="slbl t" data-ms="Amaran utama" data-en="Main alerts">Amaran utama</div>
+    <div id="liveHomeAlert"><div class="ab"><i class="ti ti-loader"></i><div><div class="abt t" data-ms="Memuatkan berita gangguan…" data-en="Loading disruption news…">Memuatkan berita gangguan…</div></div></div></div>
+
+    <div class="slbl t" data-ms="Akses pantas" data-en="Quick access">Akses pantas</div>
+    <div class="hg">
+      <div class="hb" onclick="switchTab('pp')"><div class="hbn t" data-ms="Cari laluan" data-en="Find route">Cari laluan</div></div>
+      <div class="hb" onclick="switchTab('pm')"><div class="hbn t" data-ms="Peta stesen" data-en="Station map">Peta stesen</div></div>
+      <div class="hb" onclick="switchTab('pk')"><div class="hbn t" data-ms="Semak tambang" data-en="Check fare">Semak tambang</div></div>
+      <div class="hb" onclick="switchTab('pa')"><div class="hbn t" data-ms="Lihat amaran" data-en="View alerts">Lihat amaran</div></div>
+    </div>
+  </div>
+
+  <!-- RANCANG -->
+  <div id="pp" class="pg">
+    <div class="seg-c"><div class="seg on t" data-ms="Sekarang" data-en="Now">Sekarang</div><div class="seg t" data-ms="Jadual tiba" data-en="Arrive by">Jadual tiba</div><div class="seg t" data-ms="Jadual bertolak" data-en="Depart at">Jadual bertolak</div></div>
+    <div class="iw">
+      <div class="ir plan-tap" id="planFromRow" role="button" tabindex="0"><div class="id2" style="background:#059669"></div><div class="il t" data-ms="Dari mana?" data-en="From where?">Dari mana?</div><div class="iv" id="planFrom" data-value="Puchong Prima, Selangor, Malaysia" data-stop-id="">Puchong Prima</div></div>
+      <div class="swb" id="planSwap" role="button" tabindex="0" title="Tukar"><i class="ti ti-arrows-sort"></i></div>
+      <div class="ir plan-tap" id="planToRow" role="button" tabindex="0"><div class="id2" style="background:#e8394d"></div><div class="il t" data-ms="Ke mana?" data-en="To where?">Ke mana?</div><div class="iv" id="planTo" data-value="KLCC, Kuala Lumpur, Malaysia" data-stop-id="KJ10">KLCC</div></div>
+      <div class="or"><div class="ob on t" data-ms="Tercepat" data-en="Fastest">Tercepat</div><div class="ob t" data-ms="Termurah" data-en="Cheapest">Termurah</div><div class="ob t" data-ms="Kurang tukar" data-en="Least transfers">Kurang tukar</div></div>
+    </div>
+    <div class="slbl t" data-ms="Laluan dicadangkan" data-en="Suggested routes">Laluan dicadangkan</div>
+    <div id="livePlanRoutes"><div style="text-align:center;padding:20px;color:var(--text2)"><i class="ti ti-loader"></i> …</div></div>
+  </div>
+
+  <!-- REL -->
+  <div id="pr" class="pg">
+    <div class="ab"><i class="ti ti-alert-triangle"></i><div><div class="abt t" data-ms="MRT Putrajaya — gangguan aktif" data-en="MRT Putrajaya — active disruption">MRT Putrajaya — gangguan aktif</div><div class="abd t" data-ms="Kelewatan 15–20 min: Cyberjaya Utara ↔ Putrajaya Sentral" data-en="Delay 15–20 min: Cyberjaya Utara ↔ Putrajaya Sentral">Kelewatan 15–20 min: Cyberjaya Utara ↔ Putrajaya Sentral</div></div></div>
+    <div class="slbl t" data-ms="Tapis laluan" data-en="Filter lines">Tapis laluan</div>
+    <div class="rf2" id="railFilters"><div class="rf m on" data-filter="mrt">MRT</div><div class="rf e on" data-filter="erl">ERL</div><div class="rf k on" data-filter="ktm">KTM</div><div class="rf l" data-filter="lrt">LRT</div><div class="rf mo" data-filter="monorel">Monorel</div></div>
+    <div class="slbl t" data-ms="Peta laluan rel" data-en="Rail route map">Peta laluan rel</div>
+    <div class="rm" id="liveRailMap">
+      <div class="rml"><div class="rdot m" style="width:9px;height:9px;border:none"></div>MRT Kajang (SBK)</div>
+      <div class="rrow"><div class="rst"><div class="rdot m"></div><div class="rsn">Kwasa</div></div><div class="rseg m"></div><div class="rst"><div class="rdot m ac"></div><div class="rsn">Sg Buloh</div></div><div class="rseg m"></div><div class="rst"><div class="rdot m"></div><div class="rsn">KJ</div></div><div class="rseg m"></div><div class="rst"><div class="rdot m"></div><div class="rsn">KLCC</div></div><div class="rseg m"></div><div class="rst"><div class="rdot m"></div><div class="rsn">Kajang</div></div></div>
+      <div class="rml" style="margin-top:10px"><div class="rdot m" style="width:9px;height:9px;border:none"></div>MRT Putrajaya (PY) <span style="color:#e8394d;font-size:10px;margin-left:4px">⚠</span></div>
+      <div class="rrow"><div class="rst"><div class="rdot m"></div><div class="rsn">Kwasa S.</div></div><div class="rseg m"></div><div class="rst"><div class="rdot m"></div><div class="rsn">Sg Besi</div></div><div class="rseg dis"></div><div class="rst"><div class="rdot m"></div><div class="rsn">Cyber U.</div></div><div class="rseg dis"></div><div class="rst"><div class="rdot m"></div><div class="rsn">Putrajaya</div></div></div>
+      <div class="rml" style="margin-top:10px"><div class="rdot e" style="width:9px;height:9px;border:none"></div>ERL — KLIA Ekspres &amp; Transit</div>
+      <div class="rrow"><div class="rst"><div class="rdot e"></div><div class="rsn">KL Sentral</div></div><div class="rseg e"></div><div class="rst"><div class="rdot e"></div><div class="rsn">Salak T.</div></div><div class="rseg e"></div><div class="rst"><div class="rdot e"></div><div class="rsn">KLIA2</div></div><div class="rseg e"></div><div class="rst"><div class="rdot e"></div><div class="rsn">KLIA</div></div></div>
+      <div class="rml" style="margin-top:10px"><div class="rdot k" style="width:9px;height:9px;border:none"></div>KTM Komuter</div>
+      <div class="rrow"><div class="rst"><div class="rdot k"></div><div class="rsn">Batu Caves</div></div><div class="rseg k"></div><div class="rst"><div class="rdot k"></div><div class="rsn">KL Sentral</div></div><div class="rseg k"></div><div class="rst"><div class="rdot k"></div><div class="rsn">Subang</div></div><div class="rseg k"></div><div class="rst"><div class="rdot k"></div><div class="rsn">Klang</div></div></div>
+      <div class="rl"><div class="rli"><div class="rld" style="background:#e8394d"></div>MRT</div><div class="rli"><div class="rld" style="background:#7c3aed"></div>ERL</div><div class="rli"><div class="rld" style="background:#0369a1"></div>KTM</div><div class="rli"><div class="rld" style="background:repeating-linear-gradient(90deg,#e8394d 0,#e8394d 3px,#ccc 3px,#ccc 6px)"></div><span class="t" data-ms="Gangguan" data-en="Disruption">Gangguan</span></div></div>
+    </div>
+    <div class="slbl t" data-ms="Laluan rel (data rasmi)" data-en="Rail lines (official data)">Laluan rel (data rasmi)</div>
+    <div class="scl" id="liveRailSchedule">
+      <div class="scc"><div class="scb m">MRT<br>SBK</div><div class="sci"><div class="scn t" data-ms="Laluan Kajang" data-en="Kajang Line">Laluan Kajang</div><div class="scr">Sg Buloh ↔ Kajang</div><div class="scs ok"><i class="ti ti-circle-check" style="font-size:11px"></i><span class="t" data-ms="Normal" data-en="Normal">Normal</span></div></div><div class="sct"><div class="scnx">4 min</div><div class="sclb t" data-ms="seterusnya" data-en="next">seterusnya</div><div class="tcs"><div class="tc s">4</div><div class="tc">16</div><div class="tc">28</div></div></div></div>
+      <div class="scc"><div class="scb m">MRT<br>PY</div><div class="sci"><div class="scn t" data-ms="Laluan Putrajaya" data-en="Putrajaya Line">Laluan Putrajaya</div><div class="scr">Kwasa S. ↔ Putrajaya</div><div class="scs er"><i class="ti ti-alert-triangle" style="font-size:11px"></i><span class="t" data-ms="Lambat 15–20 min" data-en="Delayed 15–20 min">Lambat 15–20 min</span></div></div><div class="sct"><div class="scnx">~22 min</div><div class="sclb t" data-ms="anggaran" data-en="estimate">anggaran</div></div></div>
+      <div class="scc"><div class="scb e">ERL</div><div class="sci"><div class="scn">KLIA Ekspres</div><div class="scr">KL Sentral → KLIA</div><div class="scs ok"><i class="ti ti-circle-check" style="font-size:11px"></i><span class="t" data-ms="Tepat masa" data-en="On time">Tepat masa</span></div></div><div class="sct"><div class="scnx">12 min</div><div class="sclb t" data-ms="seterusnya" data-en="next">seterusnya</div><div class="tcs"><div class="tc s">12</div><div class="tc">42</div></div></div></div>
+      <div class="scc"><div class="scb k">KTM</div><div class="sci"><div class="scn">KTM Komuter</div><div class="scr">Batu Caves ↔ Klang</div><div class="scs ok"><i class="ti ti-circle-check" style="font-size:11px"></i><span class="t" data-ms="Normal" data-en="Normal">Normal</span></div></div><div class="sct"><div class="scnx">18 min</div><div class="sclb t" data-ms="seterusnya" data-en="next">seterusnya</div><div class="tcs"><div class="tc">18</div><div class="tc">35</div></div></div></div>
+    </div>
+  </div>
+
+  <!-- BAS -->
+  <div id="pb" class="pg">
+    <div class="seg-c" id="busSeg"><div class="seg on t" data-bview="nearby" data-ms="Berdekatan" data-en="Nearby">Berdekatan</div><div class="seg t" data-bview="all" data-ms="Semua laluan" data-en="All routes">Semua laluan</div><div class="seg t" data-bview="map" data-ms="Peta bas" data-en="Bus map">Peta bas</div></div>
+    <div id="busMapView" style="display:none">
+      <div class="slbl"><i class="ti ti-live-photo" style="color:#059669;font-size:12px;vertical-align:-1px"></i> <span class="t" data-ms="Bas feeder masa nyata" data-en="Live feeder buses">Bas feeder masa nyata</span> · <span id="busMapCount">—</span></div>
+      <div class="mpw">
+        <div id="busMpc" class="mpc"></div>
+      </div>
+      <div class="rl"><div class="rli"><div class="rld" style="background:#059669"></div><span class="t" data-ms="Bas feeder bergerak (GPS)" data-en="Moving feeder bus (GPS)">Bas feeder bergerak (GPS)</span></div><div class="rli"><div class="rld" style="background:#e8394d"></div><span class="t" data-ms="Stesen rel utama" data-en="Major rail station">Stesen rel utama</span></div></div>
+    </div>
+    <div id="busListView">
+    <div class="slbl t" data-ms="Tapis perkhidmatan" data-en="Filter services">Tapis perkhidmatan</div>
+    <div class="pl" id="busFilters"><div class="pi on t" data-bfilter="semua" data-ms="Semua" data-en="All">Semua</div><div class="pi" data-bfilter="rapidkl">RapidKL</div><div class="pi" data-bfilter="brt">BRT</div><div class="pi t" data-bfilter="ekspres" data-ms="Ekspres" data-en="Express">Ekspres</div><div class="pi" data-bfilter="feeder">Feeder</div><div class="pi t" data-bfilter="malam" data-ms="Malam" data-en="Night">Malam</div></div>
+    <div class="slbl t" data-ms="Laluan bas (data rasmi + masa nyata)" data-en="Bus routes (official + live data)">Laluan bas (data rasmi + masa nyata)</div>
+    <div id="liveBusList"><div class="bc"><div class="bct"><div class="bcb r">RapidKL</div><div><div class="bcn">T789 — Titiwangsa ↔ Klang</div><div class="bcr">Titiwangsa · PWTC · Masjid Jamek · KL Sentral · Klang</div></div></div><div class="bcm"><div class="bmi"><i class="ti ti-clock"></i><span class="t" data-ms="Setiap 15–20 min" data-en="Every 15–20 min">Setiap 15–20 min</span></div><div class="bmi"><i class="ti ti-map-pin"></i>22 <span class="t" data-ms="henti" data-en="stops">henti</span></div><div style="font-size:11px;color:#d97706;display:flex;align-items:center;gap:3px"><i class="ti ti-alert-triangle" style="font-size:12px"></i><span class="t" data-ms="Lambat 10 min" data-en="Delayed 10 min">Lambat 10 min</span></div></div><div class="bct2"><span style="font-size:11px;color:var(--text2)" class="t" data-ms="Bas seterusnya" data-en="Next bus">Bas seterusnya</span><div class="chs"><div class="ch s">9:58</div><div class="ch">10:14</div><div class="ch">10:30</div></div></div></div>
+    <div class="bc"><div class="bct"><div class="bcb bt">BRT</div><div><div class="bcn">BRT Sunway Line</div><div class="bcr">Sunway Lagoon · USJ 7 · Inti College · Subang Jaya · Sri Muda</div></div></div><div class="bcm"><div class="bmi"><i class="ti ti-clock"></i><span class="t" data-ms="Setiap 8–12 min" data-en="Every 8–12 min">Setiap 8–12 min</span></div><div style="font-size:11px;color:#059669;display:flex;align-items:center;gap:3px"><i class="ti ti-circle-check" style="font-size:12px"></i><span class="t" data-ms="Tepat masa" data-en="On time">Tepat masa</span></div></div><div class="bct2"><span style="font-size:11px;color:var(--text2)" class="t" data-ms="BRT seterusnya" data-en="Next BRT">BRT seterusnya</span><div class="chs"><div class="ch s">9:46</div><div class="ch">9:58</div><div class="ch">10:09</div></div></div></div>
+    <div class="bc"><div class="bct"><div class="bcb ex">Ekspres</div><div><div class="bcn">E101 — Shah Alam Ekspres</div><div class="bcr">KL Sentral · Puchong · Shah Alam · Setia Alam</div></div></div><div class="bcm"><div class="bmi"><i class="ti ti-clock"></i><span class="t" data-ms="Setiap 30 min" data-en="Every 30 min">Setiap 30 min</span></div><div class="bmi"><i class="ti ti-currency-dollar"></i>RM 3–5.50</div><div style="font-size:11px;color:#059669;display:flex;align-items:center;gap:3px"><i class="ti ti-circle-check" style="font-size:12px"></i><span class="t" data-ms="Normal" data-en="Normal">Normal</span></div></div><div class="bct2"><span style="font-size:11px;color:var(--text2)" class="t" data-ms="Bas seterusnya" data-en="Next bus">Bas seterusnya</span><div class="chs"><div class="ch">10:00</div><div class="ch">10:30</div></div></div></div>
+    <div class="bc"><div class="bct"><div class="bcb fd">Feeder</div><div><div class="bcn">CF01/CF02 — Feeder Cyberjaya</div><div class="bcr">MRT Cyber Utara · Cyberjaya · Putrajaya Sentral</div></div></div><div class="bcm"><div class="bmi"><i class="ti ti-clock"></i><span class="t" data-ms="Setiap 20 min" data-en="Every 20 min">Setiap 20 min</span></div><div style="font-size:11px;color:#059669;display:flex;align-items:center;gap:3px"><i class="ti ti-route-alt-left" style="font-size:12px"></i><span class="t" data-ms="Alternatif MRT PY" data-en="MRT PY alternative">Alternatif MRT PY</span></div></div>      <div class="bct2"><span style="font-size:11px;color:var(--text2)" class="t" data-ms="Bas seterusnya" data-en="Next bus">Bas seterusnya</span><div class="chs"><div class="ch s">9:52</div><div class="ch">10:12</div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- AMARAN -->
+  <div id="pa" class="pg">
+    <div class="slbl t" data-ms="Kata kunci dipantau" data-en="Monitored keywords">Kata kunci dipantau</div>
+    <div class="kw2" id="kwFilters"><div class="kw on" data-kw="gangguan"><i class="ti ti-circle-dot"></i>gangguan</div><div class="kw on" data-kw="delay"><i class="ti ti-circle-dot"></i>delay</div><div class="kw on" data-kw="kerosakan"><i class="ti ti-circle-dot"></i>kerosakan</div><div class="kw on" data-kw="trafik"><i class="ti ti-circle-dot"></i>trafik</div><div class="kw" data-kw="banjir"><i class="ti ti-plus"></i>banjir</div><div class="kw" data-kw="reroute"><i class="ti ti-plus"></i>reroute</div><div class="kw" data-kw="breakdown"><i class="ti ti-plus"></i>breakdown</div></div>
+    <div class="slbl t" data-ms="Berita & notifikasi terkini" data-en="Latest news & notifications">Berita & notifikasi terkini</div>
+    <div class="nl" id="liveAlertList">
+      <div class="ni e"><div class="ns"><i class="ti ti-brand-twitter" style="font-size:11px;vertical-align:-1px"></i> @RapidKLMRT</div><div class="nt2 t" data-ms="Gangguan perkhidmatan Cyberjaya Utara – Putrajaya Sentral. Kelewatan 15–20 min." data-en="Service disruption Cyberjaya Utara – Putrajaya Sentral. Delay 15–20 min.">Gangguan perkhidmatan Cyberjaya Utara – Putrajaya Sentral. Kelewatan 15–20 min.</div><div class="ntm">9:31 AM</div></div>
+      <div class="ni w"><div class="ns"><i class="ti ti-brand-twitter" style="font-size:11px;vertical-align:-1px"></i> @myrapid_biz</div><div class="nt2 t" data-ms="Kelewatan Bas T789 & T792 akibat kesesakan di Jalan Tuanku Abdul Halim." data-en="Bus T789 & T792 delayed due to congestion at Jalan Tuanku Abdul Halim.">Kelewatan Bas T789 &amp; T792 akibat kesesakan di Jalan Tuanku Abdul Halim.</div><div class="ntm">9:41 AM</div></div>
+      <div class="ni i"><div class="ns"><i class="ti ti-world" style="font-size:11px;vertical-align:-1px"></i> rapidkl.com.my</div><div class="nt2 t" data-ms="Pengguna digalakkan gunakan bas feeder CF01 & CF02 semasa gangguan." data-en="Passengers encouraged to use feeder buses CF01 & CF02 during disruption.">Pengguna digalakkan gunakan bas feeder CF01 &amp; CF02 semasa gangguan.</div><div class="ntm">9:35 AM</div></div>
+      <div class="ni ok"><div class="ns"><i class="ti ti-circle-check" style="font-size:11px;vertical-align:-1px"></i> <span class="t" data-ms="Status normal" data-en="Normal status">Status normal</span></div><div class="nt2 t" data-ms="MRT Kajang, KTM Komuter, ERL — semua beroperasi seperti biasa." data-en="MRT Kajang, KTM Komuter, ERL — all operating normally.">MRT Kajang, KTM Komuter, ERL — semua beroperasi seperti biasa.</div><div class="ntm">9:00 AM</div></div>
+    </div>
+    <div class="slbl t" data-ms="Alternatif cadangan" data-en="Suggested alternatives">Alternatif cadangan</div>
+    <div class="ab2"><div class="abh"><i class="ti ti-route-alt-left" style="font-size:16px"></i><span class="t" data-ms="Pilih alternatif terbaik anda" data-en="Choose your best alternative">Pilih alternatif terbaik anda</span></div><div class="ar"><div class="ai"><i class="ti ti-bus"></i></div><div class="ainf"><div class="an t" data-ms="Bas feeder CF01 / CF02" data-en="Feeder bus CF01 / CF02">Bas feeder CF01 / CF02</div><div class="ad2 t" data-ms="Percuma · Khas semasa gangguan" data-en="Free · Provided during disruption">Percuma · Khas semasa gangguan</div></div><div class="ae">~35 min</div></div><div class="ar"><div class="ai"><i class="ti ti-train"></i></div><div class="ainf"><div class="an">KTM Komuter + feeder</div><div class="ad2 t" data-ms="Tukar di KL Sentral" data-en="Transfer at KL Sentral">Tukar di KL Sentral</div></div><div class="ae">~45 min</div></div><div class="ar"><div class="ai"><i class="ti ti-car"></i></div><div class="ainf"><div class="an">Grab / AirAsia Ride</div><div class="ad2 t" data-ms="Anggaran RM 18–28" data-en="Estimated RM 18–28">Anggaran RM 18–28</div></div><div class="ae">~28 min</div></div><div class="ar"><div class="ai"><i class="ti ti-motorbike"></i></div><div class="ainf"><div class="an">Grab Bike / MyCar Moto</div><div class="ad2 t" data-ms="Elak trafik, lebih laju" data-en="Beat traffic, faster">Elak trafik, lebih laju</div></div><div class="ae">~20 min</div></div></div>
+  </div>
+
+  <!-- PETA INTERAKTIF -->
+  <div id="pm" class="pg">
+    <div class="slbl t" data-ms="Peta stesen + bas feeder masa nyata" data-en="Station map + live feeder buses">Peta stesen + bas feeder masa nyata · titik hijau = bas MRT feeder masa nyata</div>
+    <div class="rf2" id="mapFilters"><div class="rf m on" data-mfilter="MRT">MRT</div><div class="rf l on" data-mfilter="LRT">LRT</div><div class="rf mo on" data-mfilter="MR">Monorel</div><div class="rf bt on" data-mfilter="BRT">BRT</div><div class="rf bus on" data-mfilter="BAS"><i class="ti ti-live-photo" style="font-size:10px;vertical-align:-1px"></i> <span class="t" data-ms="Bas masa nyata" data-en="Live buses">Bas masa nyata</span></div></div>
+    <div class="mpw">
+      <div id="mpc" class="mpc"></div>
+    </div>
+    <div id="sdb" style="display:none" class="sdbox">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:34px;height:34px;border-radius:10px;background:#FEF2F2;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-building-bank" style="font-size:16px;color:#B91C1C"></i></div>
+        <div><div style="font-size:14px;font-weight:700;color:var(--text)" id="sdn">—</div><div style="font-size:11px;color:var(--text2);margin-top:1px" id="sdl">—</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--text2)" id="sdi">—</div>
+    </div>
+  </div>
+
+  <!-- KALKULATOR TAMBANG -->
+  <div id="pk" class="pg">
+    <div class="slbl t" data-ms="Kalkulator tambang transit" data-en="Transit fare calculator">Kalkulator tambang transit</div>
+    <div class="cb">
+      <div class="slbl" style="margin-top:0" id="lm">Mod perjalanan</div>
+      <div class="cmo">
+        <div class="cmode on" data-mode="mrt" onclick="selMode(this)">MRT</div>
+        <div class="cmode" data-mode="lrt" onclick="selMode(this)">LRT</div>
+        <div class="cmode" data-mode="mr" onclick="selMode(this)">Monorel</div>
+        <div class="cmode" data-mode="ktm" onclick="selMode(this)">KTM</div>
+        <div class="cmode" data-mode="erl" onclick="selMode(this)">ERL</div>
+        <div class="cmode" data-mode="bus" onclick="selMode(this)"><span class="t" data-ms="Bas" data-en="Bus">Bas</span></div>
+        <div class="cmode" data-mode="brt" onclick="selMode(this)">BRT</div>
+      </div>
+      <div id="modeNote" style="font-size:11px;color:var(--text2);margin-bottom:10px;display:none"></div>
+      <div class="slbl" id="lf">Stesen mula</div>
+      <select class="cs" id="fs" onchange="calcFare()">
+        <option value="0">KL Sentral</option><option value="1">Masjid Jamek</option><option value="2">KLCC</option>
+        <option value="3">Bukit Bintang</option><option value="4">Titiwangsa</option><option value="5">Kajang</option>
+        <option value="6">Putrajaya Sentral</option><option value="7">Subang Jaya</option><option value="8">Klang</option><option value="9">Batu Caves</option>
+      </select>
+      <div class="slbl" id="lt">Stesen destinasi</div>
+      <select class="cs" id="ts" onchange="calcFare()">
+        <option value="2">KLCC</option><option value="0">KL Sentral</option><option value="1">Masjid Jamek</option>
+        <option value="3">Bukit Bintang</option><option value="4">Titiwangsa</option><option value="5">Kajang</option>
+        <option value="6">Putrajaya Sentral</option><option value="7">Subang Jaya</option><option value="8">Klang</option><option value="9">Batu Caves</option>
+      </select>
+    </div>
+    <div class="cr">
+      <div><span class="ccy">RM</span><span class="cam" id="fa">2.60</span></div>
+      <div class="clb" id="fl">Tambang anggaran · MyRapid Card</div>
+      <div class="cbd">
+        <div class="cbi"><div class="cbv" id="fst">3</div><div class="cbl t" id="lb1" data-ms="Stesen dilalui" data-en="Stations passed">Stesen dilalui</div></div>
+        <div class="cbi"><div class="cbv" id="ftm">12 min</div><div class="cbl t" id="lb2" data-ms="Anggaran masa" data-en="Est. time">Anggaran masa</div></div>
+        <div class="cbi"><div class="cbv" id="ftk">RM 3.10</div><div class="cbl t" id="lb3" data-ms="Token tunai" data-en="Token (cash)">Token tunai</div></div>
+        <div class="cbi"><div class="cbv" id="fsv">RM 0.50</div><div class="cbl t" id="lb4" data-ms="Jimat MyRapid" data-en="MyRapid savings">Jimat MyRapid</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bbar" id="bbar">
+    <div class="bb on" data-p="ph"><i class="ti ti-home"></i><span class="t" data-ms="Utama" data-en="Home">Utama</span></div>
+    <div class="bb" data-p="pp"><i class="ti ti-route"></i><span class="t" data-ms="Rancang" data-en="Plan">Rancang</span></div>
+    <div class="bb" data-p="pr"><i class="ti ti-train"></i><span class="t" data-ms="Rel" data-en="Rail">Rel</span></div>
+    <div class="bb" data-p="pb"><i class="ti ti-bus"></i><span class="t" data-ms="Bas" data-en="Bus">Bas</span></div>
+    <div class="bb" data-p="pa"><i class="ti ti-bell-ringing"></i><span class="t" data-ms="Amaran" data-en="Alerts">Amaran</span></div>
+  </div>
+</div>
+
+<div class="footer">
+  MyMobility Assistant Prototype &nbsp;·&nbsp; HTML · CSS · JS<br>
+  <span class="t" data-ms="Data semasa daripada sumber rasmi & berita terkini" data-en="Live data from official sources & latest news">Data semasa daripada sumber rasmi & berita terkini</span>
+  &nbsp;·&nbsp; <a href="https://github.com" target="_blank">GitHub</a>
+</div>
+
+<script>
+var lang='ms', theme='light', cmode='mrt';
+function updateClock(){var n=new Date(),h=n.getHours().toString().padStart(2,'0'),m=n.getMinutes().toString().padStart(2,'0');document.getElementById('clk').textContent=h+':'+m}
+updateClock();setInterval(updateClock,30000);
+function toggleTheme(){theme=theme==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',theme);var b=document.getElementById('tbt'),i=document.getElementById('tic');if(theme==='dark'){b.classList.add('on');i.className='ti ti-sun'}else{b.classList.remove('on');i.className='ti ti-moon'}}
+var hm={ph:{ms:'MyMobility Assistant',en:'MyMobility Assistant',sms:'MRT · ERL · KTM · Bas RapidKL · BRT · Alternatif',sen:'MRT · ERL · KTM · RapidKL Bus · BRT · Alternatives'},pp:{ms:'Rancang perjalanan',en:'Plan your journey',sms:'Cari laluan terbaik untuk anda',sen:'Find the best route for you'},pr:{ms:'Perkhidmatan rel',en:'Rail services',sms:'MRT · ERL · KTM Komuter · LRT',sen:'MRT · ERL · KTM Komuter · LRT'},pb:{ms:'Perkhidmatan bas',en:'Bus services',sms:'RapidKL · BRT · Ekspres · Feeder',sen:'RapidKL · BRT · Express · Feeder'},pa:{ms:'Amaran & gangguan',en:'Alerts & disruptions',sms:'Sumber rasmi · Twitter · Alternatif',sen:'Official sources · Twitter · Alternatives'},pm:{ms:'Peta interaktif',en:'Interactive map',sms:'Stesen MRT · ERL · KTM · LRT',sen:'MRT · ERL · KTM · LRT stations'},pk:{ms:'Kalkulator tambang',en:'Fare calculator',sms:'Kira tambang perjalanan anda',sen:'Calculate your travel fare'}};
+function setL(l){lang=l;document.getElementById('lms').classList.toggle('on',l==='ms');document.getElementById('len').classList.toggle('on',l==='en');document.querySelectorAll('.t[data-'+l+']').forEach(function(e){e.textContent=e.getAttribute('data-'+l)});var si=document.getElementById('searchInput');if(si)si.placeholder=l==='ms'?'Cari stesen (min. 2 aksara)...':'Search station (min. 2 chars)...';document.getElementById('wmsub').textContent=l==='ms'?'Semak cepat, jalan lancar.':'Check fast, travel smooth.';var cur=document.querySelector('.ntab.on');if(cur&&hm[cur.dataset.p]){var h=hm[cur.dataset.p];document.getElementById('ht').textContent=h[l];document.getElementById('hs').textContent=h['s'+l]}document.getElementById('lm').textContent=l==='ms'?'Mod perjalanan':'Travel mode';document.getElementById('lf').textContent=l==='ms'?'Stesen mula':'From station';document.getElementById('lt').textContent=l==='ms'?'Stesen destinasi':'To station';document.getElementById('fl').textContent=l==='ms'?'Tambang anggaran · MyRapid Card':'Estimated fare · MyRapid Card';calcFare()}
+function switchTab(id){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});document.querySelectorAll('.ntab,.bb').forEach(function(t){t.classList.remove('on')});var pg=document.getElementById(id);if(pg)pg.classList.add('on');document.querySelectorAll('[data-p="'+id+'"]').forEach(function(t){t.classList.add('on')});if(hm[id]){document.getElementById('ht').textContent=hm[id][lang];document.getElementById('hs').textContent=hm[id]['s'+lang]}window.scrollTo({top:0,behavior:'smooth'})}
+document.getElementById('nav').addEventListener('click',function(e){var t=e.target.closest('[data-p]');if(t)switchTab(t.dataset.p)});
+document.getElementById('bbar').addEventListener('click',function(e){var t=e.target.closest('[data-p]');if(t)switchTab(t.dataset.p)});
+document.querySelectorAll('.seg-c').forEach(function(c){c.addEventListener('click',function(e){var s=e.target.closest('.seg');if(!s)return;c.querySelectorAll('.seg').forEach(function(x){x.classList.remove('on')});s.classList.add('on')})});
+document.querySelectorAll('.or').forEach(function(row){row.addEventListener('click',function(e){var b=e.target.closest('.ob');if(!b)return;row.querySelectorAll('.ob').forEach(function(x){x.classList.remove('on')});b.classList.add('on')})});
+var ft=[[0,1.2,1.6,1.8,2,3.2,3.6,2.4,4.5,2.8],[1.2,0,1.2,1.4,1.6,3,3.4,2.2,4.2,2.5],[1.6,1.2,0,1.2,1.8,2.8,3.2,2.6,4.8,3],[1.8,1.4,1.2,0,1.6,3,3.4,2.8,5,3.2],[2,1.6,1.8,1.6,0,3.6,4,3,5.2,2.2],[3.2,3,2.8,3,3.6,0,2.4,3.8,3.6,4.4],[3.6,3.4,3.2,3.4,4,2.4,0,4.2,4,4.8],[2.4,2.2,2.6,2.8,3,3.8,4.2,0,3.2,3.6],[4.5,4.2,4.8,5,5.2,3.6,4,3.2,0,5.8],[2.8,2.5,3,3.2,2.2,4.4,4.8,3.6,5.8,0]];
+var st=[[0,1,2,3,3,8,10,5,12,6],[1,0,1,2,2,7,9,4,11,5],[2,1,0,1,3,6,8,5,13,7],[3,2,1,0,2,7,9,6,14,8],[3,2,3,2,0,9,11,7,13,4],[8,7,6,7,9,0,3,9,8,11],[10,9,8,9,11,3,0,10,9,13],[5,4,5,6,7,9,10,0,7,8],[12,11,13,14,13,8,9,7,0,14],[6,5,7,8,4,11,13,8,14,0]];
+var mx={mrt:1,lrt:0.9,ktm:0.85,erl:1.4,bus:0.5,brt:0.6};
+function selMode(el){document.querySelectorAll('.cmode').forEach(function(m){m.classList.remove('on')});el.classList.add('on');cmode=el.dataset.mode;calcFare()}
+function calcFare(){var f=parseInt(document.getElementById('fs').value),t=parseInt(document.getElementById('ts').value);if(f===t){document.getElementById('fa').textContent='0.00';return}var fare=ft[f][t]*(mx[cmode]||1),tok=fare+0.5,stops=st[f][t],mins=stops*4;document.getElementById('fa').textContent=fare.toFixed(2);document.getElementById('ftk').textContent='RM '+tok.toFixed(2);document.getElementById('fst').textContent=stops;document.getElementById('ftm').textContent=mins+' min';document.getElementById('fsv').textContent='RM 0.50';document.getElementById('fl').textContent=lang==='ms'?'Tambang anggaran · MyRapid Card':'Estimated fare · MyRapid Card'}
+calcFare();
+</script>
+<script src="js/pwa.js"></script>
+<script type="module" src="js/live-data.js"></script>
+</body>
+</html>

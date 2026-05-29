@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MyMobility">
+  <rect width="512" height="512" rx="108" fill="#14142b"/>
+  <circle cx="256" cy="234" r="96" fill="none" stroke="#e8394d" stroke-width="20"/>
+  <path d="M192 320 L256 150 L320 320 Z" fill="#e8394d" opacity="0.9"/>
+  <rect x="128" y="352" width="256" height="26" rx="13" fill="#ffffff" opacity="0.25"/>
+</svg>
