@@ -19,11 +19,20 @@ function fmtTime(d) {
   return dt.toLocaleTimeString(lang() === 'ms' ? 'ms-MY' : 'en-MY', { hour: 'numeric', minute: '2-digit' });
 }
 
+function fmtDateTime(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  const loc = lang() === 'ms' ? 'ms-MY' : 'en-MY';
+  const dateStr = dt.toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' });
+  const timeStr = dt.toLocaleTimeString(loc, { hour: 'numeric', minute: '2-digit' });
+  return `${dateStr} · ${timeStr}`;
+}
+
 function fmtAgo(d) {
   const m = Math.round((Date.now() - new Date(d)) / 60000);
   if (m < 1) return t('Baru sahaja', 'Just now');
   if (m < 60) return t(`${m} min lalu`, `${m} min ago`);
-  return fmtTime(d);
+  return fmtDateTime(d);
 }
 
 function setStatus(ok, msg) {
@@ -51,7 +60,7 @@ async function renderDashboard(data) {
       alertEl.innerHTML = top
         .map((a) => {
           const icon = a.platform === 'threads' ? 'ti-brand-threads' : 'ti-alert-triangle';
-          return `<div class="ab"><i class="ti ${icon}"></i><div><div class="abt">${esc(a.title)}</div><div class="abd">${esc(a.source || '')} · ${fmtAgo(a.pubDate)}</div><div class="abt2"><a href="${esc(a.link)}" target="_blank" rel="noopener">${t('Baca sumber', 'Read source')} →</a></div></div></div>`;
+          return `<div class="ab"><i class="ti ${icon}"></i><div><div class="abt">${esc(a.title)}</div><div class="abd">${esc(a.source || '')} · ${fmtDateTime(a.pubDate)}</div><div class="abt2"><a href="${esc(a.link)}" target="_blank" rel="noopener">${t('Baca sumber', 'Read source')} →</a></div></div></div>`;
         })
         .join('');
     }
@@ -907,7 +916,7 @@ function paintAlertsFromCache() {
       const icon = it.platform === 'threads' ? 'ti-brand-threads' : 'ti-news';
       return `<div class="ni ${cls}"><div class="ns"><i class="ti ${icon}" style="font-size:11px"></i> ${esc(it.source || 'News')}</div>
         <div class="nt2"><a href="${esc(it.link)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(it.title)}</a></div>
-        <div class="ntm">${fmtAgo(it.pubDate)} · <a href="${esc(it.link)}" target="_blank" rel="noopener" style="color:var(--accent)">${t('sumber', 'source')}</a></div></div>`;
+        <div class="ntm">${fmtDateTime(it.pubDate)} · <a href="${esc(it.link)}" target="_blank" rel="noopener" style="color:var(--accent)">${t('sumber', 'source')}</a></div></div>`;
     })
     .join('');
 
