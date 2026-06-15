@@ -1,5 +1,5 @@
 /* MyMobility PWA — cache shell, network for live API */
-const CACHE = 'mymobility-v8';
+const CACHE = 'mymobility-v9';
 // Laluan relatif supaya berfungsi di root (Render) dan subpath (GitHub Pages /MyMobility/).
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'js/live-data.js', 'js/pwa.js', 'icons/icon-192.svg', 'icons/icon-512.svg', 'icons/icon-maskable.svg'];
 

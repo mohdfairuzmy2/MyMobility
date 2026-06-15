@@ -22,6 +22,7 @@ function fmtTime(d) {
 function fmtDateTime(d) {
   if (!d) return '—';
   const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return '—';
   const loc = lang() === 'ms' ? 'ms-MY' : 'en-MY';
   const dateStr = dt.toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' });
   const timeStr = dt.toLocaleTimeString(loc, { hour: 'numeric', minute: '2-digit' });
